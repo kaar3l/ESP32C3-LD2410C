@@ -5,6 +5,8 @@
 #include <Preferences.h>
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
+#include <ArduinoOTA.h>
+#include <ElegantOTA.h>
 
 // ── Pins ────────────────────────────────────────────────────────────────────
 #define RELAY_PIN   5   // HIGH = relay ON
@@ -286,7 +288,7 @@ th{text-align:left;color:#a6adc8;padding:4px 6px;border-bottom:1px solid #45475a
 td{padding:3px 6px})";
 
 static String nav() {
-    return R"(<nav><a href='/'>Status</a><a href='/wifi'>Wi-Fi</a><a href='/mqtt'>MQTT</a><a href='/ld2410'>Sensor</a></nav><div class='c'>)";
+    return R"(<nav><a href='/'>Status</a><a href='/wifi'>Wi-Fi</a><a href='/mqtt'>MQTT</a><a href='/ld2410'>Sensor</a><a href='/update'>OTA Update</a></nav><div class='c'>)";
 }
 static String head(const char* extra = "") {
     return String("<!DOCTYPE html><html><head><meta charset='utf-8'>"
@@ -462,6 +464,27 @@ void startAP() {
     Serial.println("AP mode " + WiFi.softAPIP().toString() + "  SSID: " AP_SSID "  Pass: " AP_PASS);
 }
 
+// ── OTA ───────────────────────────────────────────────────────────────────────
+
+void setupOTA() {
+    // ArduinoOTA — PlatformIO network upload (pio run -t upload --upload-port <IP>)
+    ArduinoOTA.setHostname("esp32-ld2410c");
+    ArduinoOTA.onStart([]() {
+        Serial.println("OTA start");
+    });
+    ArduinoOTA.onEnd([]() {
+        Serial.println("OTA done");
+    });
+    ArduinoOTA.onError([](ota_error_t e) {
+        Serial.printf("OTA error %u\n", e);
+    });
+    ArduinoOTA.begin();
+
+    // ElegantOTA — browser upload at http://<IP>/update
+    ElegantOTA.begin(&server);
+    Serial.println("OTA ready  (ArduinoOTA + /update)");
+}
+
 // ── setup ─────────────────────────────────────────────────────────────────────
 
 void setup() {
@@ -477,6 +500,8 @@ void setup() {
     if (!connectWifi()) startAP();
 
     setupServer();
+
+    if (!apMode) setupOTA();
 
     if (!apMode && strlen(cfgMqttHost) > 0) mqttConnect();
 
@@ -496,6 +521,10 @@ void loop() {
         connectWifi();
         return;
     }
+
+    // OTA
+    ArduinoOTA.handle();
+    ElegantOTA.loop();
 
     // LD2410C
     readRadar();
