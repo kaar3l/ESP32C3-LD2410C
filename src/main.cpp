@@ -8,6 +8,7 @@
 #include <ArduinoOTA.h>
 #include <ElegantOTA.h>
 
+
 // ── Pins ────────────────────────────────────────────────────────────────────
 #define RELAY_PIN   5   // HIGH = relay ON
 #define LD2410_RX   3
@@ -373,20 +374,24 @@ String pageSensor() {
 // ── Web server ────────────────────────────────────────────────────────────────
 
 void setupServer() {
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest* r) {
+    // Qualify to avoid collision with http_method enum in ESP-IDF http_parser.h
+    const WebRequestMethod GET  = AsyncWebRequestMethod::HTTP_GET;
+    const WebRequestMethod POST = AsyncWebRequestMethod::HTTP_POST;
+
+    server.on("/", GET, [](AsyncWebServerRequest* r) {
         r->send(200, "text/html", pageStatus());
     });
-    server.on("/wifi", HTTP_GET, [](AsyncWebServerRequest* r) {
+    server.on("/wifi", GET, [](AsyncWebServerRequest* r) {
         r->send(200, "text/html", pageWifi());
     });
-    server.on("/mqtt", HTTP_GET, [](AsyncWebServerRequest* r) {
+    server.on("/mqtt", GET, [](AsyncWebServerRequest* r) {
         r->send(200, "text/html", pageMqtt());
     });
-    server.on("/ld2410", HTTP_GET, [](AsyncWebServerRequest* r) {
+    server.on("/ld2410", GET, [](AsyncWebServerRequest* r) {
         r->send(200, "text/html", pageSensor());
     });
 
-    server.on("/save/wifi", HTTP_POST, [](AsyncWebServerRequest* r) {
+    server.on("/save/wifi", POST, [](AsyncWebServerRequest* r) {
         if (r->hasParam("ssid", true))
             strlcpy(cfgSsid, r->getParam("ssid", true)->value().c_str(), sizeof(cfgSsid));
         auto p = r->getParam("pass", true);
@@ -398,7 +403,7 @@ void setupServer() {
         ESP.restart();
     });
 
-    server.on("/save/mqtt", HTTP_POST, [](AsyncWebServerRequest* r) {
+    server.on("/save/mqtt", POST, [](AsyncWebServerRequest* r) {
         if (r->hasParam("host",     true)) strlcpy(cfgMqttHost,  r->getParam("host",     true)->value().c_str(), sizeof(cfgMqttHost));
         if (r->hasParam("port",     true)) cfgMqttPort = r->getParam("port",     true)->value().toInt();
         if (r->hasParam("user",     true)) strlcpy(cfgMqttUser,  r->getParam("user",     true)->value().c_str(), sizeof(cfgMqttUser));
@@ -413,7 +418,7 @@ void setupServer() {
         ESP.restart();
     });
 
-    server.on("/save/ld2410", HTTP_POST, [](AsyncWebServerRequest* r) {
+    server.on("/save/ld2410", POST, [](AsyncWebServerRequest* r) {
         if (r->hasParam("maxmove",  true)) rcMaxMove  = r->getParam("maxmove",  true)->value().toInt();
         if (r->hasParam("maxstill", true)) rcMaxStill = r->getParam("maxstill", true)->value().toInt();
         if (r->hasParam("idle",     true)) rcIdleSec  = r->getParam("idle",     true)->value().toInt();
