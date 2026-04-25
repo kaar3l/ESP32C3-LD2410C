@@ -272,10 +272,10 @@ void mqttConnect() {
 static const char CSS[] PROGMEM = R"(
 body{font-family:Arial,sans-serif;margin:0;background:#fff;color:#222}
 nav{background:#ebebeb;padding:10px 20px;display:flex;gap:20px;flex-wrap:wrap;border-bottom:1px solid #d0d0d0}
-nav a{color:#1a56db;text-decoration:none}
-nav a:hover{color:#1e40af}
+nav a{color:#000;text-decoration:none}
+nav a:hover{color:#444}
 .c{max-width:680px;margin:28px auto;padding:0 14px}
-h2{color:#1a56db;border-bottom:1px solid #e0e0e0;padding-bottom:7px}
+h2{color:#000;border-bottom:1px solid #e0e0e0;padding-bottom:7px}
 .box{background:#f9f9f9;border:1px solid #e0e0e0;border-radius:8px;padding:18px;margin-bottom:18px}
 label{display:block;margin:9px 0 3px;color:#555;font-size:14px}
 input[type=text],input[type=password],input[type=number]{
