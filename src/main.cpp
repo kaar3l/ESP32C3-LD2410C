@@ -270,28 +270,28 @@ void mqttConnect() {
 // ── HTML helpers ─────────────────────────────────────────────────────────────
 
 static const char CSS[] PROGMEM = R"(
-body{font-family:Arial,sans-serif;margin:0;background:#1e1e2e;color:#cdd6f4}
-nav{background:#313244;padding:10px 20px;display:flex;gap:20px;flex-wrap:wrap}
-nav a{color:#89b4fa;text-decoration:none}
-nav a:hover{color:#cba6f7}
+body{font-family:Arial,sans-serif;margin:0;background:#fff;color:#222}
+nav{background:#ebebeb;padding:10px 20px;display:flex;gap:20px;flex-wrap:wrap;border-bottom:1px solid #d0d0d0}
+nav a{color:#1a56db;text-decoration:none}
+nav a:hover{color:#1e40af}
 .c{max-width:680px;margin:28px auto;padding:0 14px}
-h2{color:#89b4fa;border-bottom:1px solid #45475a;padding-bottom:7px}
-.box{background:#313244;border-radius:8px;padding:18px;margin-bottom:18px}
-label{display:block;margin:9px 0 3px;color:#a6adc8;font-size:14px}
+h2{color:#1a56db;border-bottom:1px solid #e0e0e0;padding-bottom:7px}
+.box{background:#f9f9f9;border:1px solid #e0e0e0;border-radius:8px;padding:18px;margin-bottom:18px}
+label{display:block;margin:9px 0 3px;color:#555;font-size:14px}
 input[type=text],input[type=password],input[type=number]{
-  width:100%;padding:7px;background:#45475a;border:1px solid #585b70;
-  border-radius:4px;color:#cdd6f4;box-sizing:border-box}
+  width:100%;padding:7px;background:#fff;border:1px solid #ccc;
+  border-radius:4px;color:#222;box-sizing:border-box}
 td input[type=number]{width:65px;padding:4px}
-button{background:#89b4fa;color:#1e1e2e;border:none;padding:9px 22px;
+button{background:#1a56db;color:#fff;border:none;padding:9px 22px;
   border-radius:4px;cursor:pointer;font-size:14px;margin-top:12px;font-weight:bold}
-button:hover{background:#74c7ec}
+button:hover{background:#1e40af}
 .row{display:flex;justify-content:space-between;align-items:center;
-  padding:6px 0;border-bottom:1px solid #45475a}
+  padding:6px 0;border-bottom:1px solid #e8e8e8}
 .row:last-child{border-bottom:none}
-.on{background:#a6e3a1;color:#1e1e2e;padding:2px 11px;border-radius:10px;font-weight:bold}
-.off{background:#45475a;color:#cdd6f4;padding:2px 11px;border-radius:10px}
+.on{background:#d1fae5;color:#065f46;padding:2px 11px;border-radius:10px;font-weight:bold}
+.off{background:#f3f4f6;color:#6b7280;padding:2px 11px;border-radius:10px}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;color:#a6adc8;padding:4px 6px;border-bottom:1px solid #45475a}
+th{text-align:left;color:#555;padding:4px 6px;border-bottom:1px solid #e0e0e0}
 td{padding:3px 6px})";
 
 static String nav() {
