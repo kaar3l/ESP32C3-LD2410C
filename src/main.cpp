@@ -313,9 +313,9 @@ String pageStatus() {
     h += "</div>";
     if (!apMode) {
         h += "<div class='box'>";
-        h += "<div class='row'><span>Wi-Fi SSID</span><span>" + String(cfgSsid) + "</span></div>";
+        h += "<div class='row'><span>Wi-Fi SSID</span><span><a href='/wifi'>" + String(cfgSsid) + "</a></span></div>";
         h += "<div class='row'><span>IP address</span><span>" + WiFi.localIP().toString() + "</span></div>";
-        h += "<div class='row'><span>MQTT broker</span><span>" + String(cfgMqttHost) + ":" + String(cfgMqttPort) + "</span></div>";
+        h += "<div class='row'><span>MQTT broker</span><span><a href='/mqtt'>" + String(cfgMqttHost) + ":" + String(cfgMqttPort) + "</a></span></div>";
         h += "<div class='row'><span>MQTT status</span><span class='" + String(mqtt.connected() ? "on'>Connected" : "off'>Disconnected") + "</span></div>";
         h += "</div>";
     }
