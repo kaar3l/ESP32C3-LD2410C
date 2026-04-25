@@ -1,0 +1,21 @@
+Hardware:
+ESP32C3 Supermini
+LD2410C
+
+-------------------
+
+Software requirements:
+PlatformIO
+Wifi connection
+MQTT connection
+LD2410C settings page.
+Wifi settings page.
+MQTT connection page.
+GPIO5 - Relay output
+GPIO3 - LD2410C RX
+GPIO4 - LD2410C TX
+
+-------------------
+
+Basic working principle
+When LD2410C detects presence the relay has to go on. There should be 10sec cooldown when precence is not detected.
