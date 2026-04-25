@@ -28,8 +28,10 @@ WiFiClient     wifiClient;
 PubSubClient   mqtt(wifiClient);
 
 // ── Config (loaded from NVS) ─────────────────────────────────────────────────
+char cfgHostname[64]  = "esp32-ld2410c";
 char cfgSsid[64]      = "";
 char cfgPass[64]      = "";
+bool cfgMqttEnabled   = true;
 char cfgMqttHost[64]  = "";
 int  cfgMqttPort      = 1883;
 char cfgMqttUser[64]  = "";
@@ -159,8 +161,10 @@ static void doApplyRadarConfig() {
 
 void loadConfig() {
     prefs.begin("cfg", true);
+    prefs.getString("hostname",  cfgHostname,  sizeof(cfgHostname));
     prefs.getString("ssid",      cfgSsid,      sizeof(cfgSsid));
     prefs.getString("pass",      cfgPass,      sizeof(cfgPass));
+    cfgMqttEnabled = prefs.getBool("mqttEn", true);
     prefs.getString("mqttHost",  cfgMqttHost,  sizeof(cfgMqttHost));
     cfgMqttPort = prefs.getInt("mqttPort", 1883);
     prefs.getString("mqttUser",  cfgMqttUser,  sizeof(cfgMqttUser));
@@ -179,6 +183,7 @@ void loadConfig() {
 
 void saveWifi() {
     prefs.begin("cfg", false);
+    prefs.putString("hostname", cfgHostname);
     prefs.putString("ssid", cfgSsid);
     prefs.putString("pass", cfgPass);
     prefs.end();
@@ -186,17 +191,18 @@ void saveWifi() {
 
 void saveMqtt() {
     prefs.begin("cfg", false);
+    prefs.putBool("mqttEn",      cfgMqttEnabled);
     prefs.putString("mqttHost",  cfgMqttHost);
     prefs.putInt("mqttPort",     cfgMqttPort);
     prefs.putString("mqttUser",  cfgMqttUser);
     prefs.putString("mqttPass",  cfgMqttPass);
     prefs.putString("mqttTopic", cfgMqttTopic);
-    prefs.putInt("cooldown",     cfgCooldown);
     prefs.end();
 }
 
 void saveRadarCfg() {
     prefs.begin("cfg", false);
+    prefs.putInt("cooldown",     cfgCooldown);
     prefs.putUChar("rcMaxMove",  rcMaxMove);
     prefs.putUChar("rcMaxStill", rcMaxStill);
     prefs.putUShort("rcIdle",    rcIdleSec);
@@ -248,7 +254,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int len) {
 }
 
 void mqttConnect() {
-    if (strlen(cfgMqttHost) == 0) return;
+    if (!cfgMqttEnabled || strlen(cfgMqttHost) == 0) return;
     mqtt.setServer(cfgMqttHost, cfgMqttPort);
     mqtt.setCallback(mqttCallback);
     String cid = "ld2410c-" + String((uint32_t)ESP.getEfuseMac(), HEX);
@@ -313,8 +319,10 @@ String pageStatus() {
     h += "</div>";
     if (!apMode) {
         h += "<div class='box'>";
+        h += "<div class='row'><span>Hostname</span><span><a href='/wifi'>" + String(cfgHostname) + "</a></span></div>";
         h += "<div class='row'><span>Wi-Fi SSID</span><span><a href='/wifi'>" + String(cfgSsid) + "</a></span></div>";
         h += "<div class='row'><span>IP address</span><span>" + WiFi.localIP().toString() + "</span></div>";
+        h += "<div class='row'><span>MQTT</span><span class='" + String(cfgMqttEnabled ? "on'>Enabled" : "off'>Disabled") + "</span></div>";
         h += "<div class='row'><span>MQTT broker</span><span><a href='/mqtt'>" + String(cfgMqttHost) + ":" + String(cfgMqttPort) + "</a></span></div>";
         h += "<div class='row'><span>MQTT status</span><span class='" + String(mqtt.connected() ? "on'>Connected" : "off'>Disconnected") + "</span></div>";
         h += "</div>";
@@ -327,6 +335,7 @@ String pageWifi() {
     String h = head();
     h += "<h2>Wi-Fi Settings</h2><div class='box'>"
          "<form method='POST' action='/save/wifi'>"
+         "<label>Hostname</label><input type='text' name='hostname' value='" + String(cfgHostname) + "' required>"
          "<label>SSID</label><input type='text' name='ssid' value='" + String(cfgSsid) + "' required>"
          "<label>Password</label><input type='password' name='pass' placeholder='leave blank to keep current'>"
          "<button type='submit'>Save &amp; Reboot</button>"
@@ -338,12 +347,13 @@ String pageWifi() {
 String pageMqtt() {
     String h = head();
     h += "<h2>MQTT Settings</h2><div class='box'><form method='POST' action='/save/mqtt'>"
+         "<label style='display:flex;align-items:center;gap:10px;cursor:pointer'>"
+         "<input type='checkbox' name='mqttEnabled' value='1'" + String(cfgMqttEnabled ? " checked" : "") + "> Enable MQTT</label>"
          "<label>Broker host</label><input type='text' name='host' value='" + String(cfgMqttHost) + "'>"
          "<label>Port</label><input type='number' name='port' value='" + String(cfgMqttPort) + "' min='1' max='65535'>"
          "<label>Username (optional)</label><input type='text' name='user' value='" + String(cfgMqttUser) + "'>"
          "<label>Password (optional)</label><input type='password' name='mqttpass' placeholder='leave blank to keep current'>"
          "<label>Base topic</label><input type='text' name='topic' value='" + String(cfgMqttTopic) + "'>"
-         "<label>Presence cooldown (seconds)</label><input type='number' name='cooldown' value='" + String(cfgCooldown) + "' min='1' max='3600'>"
          "<button type='submit'>Save &amp; Reboot</button>"
          "</form></div>";
     h += FOOT;
@@ -353,6 +363,8 @@ String pageMqtt() {
 String pageSensor() {
     String h = head();
     h += "<h2>Sensor Settings</h2><div class='box'><form method='POST' action='/save/ld2410'>"
+         "<label>Relay cooldown (seconds)</label>"
+         "<input type='number' name='cooldown' value='" + String(cfgCooldown) + "' min='1' max='3600'>"
          "<label>Max moving gate (0–8, each gate = 0.75 m)</label>"
          "<input type='number' name='maxmove' value='" + String(rcMaxMove) + "' min='2' max='8'>"
          "<label>Max stationary gate (0–8)</label>"
@@ -392,6 +404,8 @@ void setupServer() {
     });
 
     server.on("/save/wifi", POST, [](AsyncWebServerRequest* r) {
+        if (r->hasParam("hostname", true) && r->getParam("hostname", true)->value().length() > 0)
+            strlcpy(cfgHostname, r->getParam("hostname", true)->value().c_str(), sizeof(cfgHostname));
         if (r->hasParam("ssid", true))
             strlcpy(cfgSsid, r->getParam("ssid", true)->value().c_str(), sizeof(cfgSsid));
         auto p = r->getParam("pass", true);
@@ -404,11 +418,11 @@ void setupServer() {
     });
 
     server.on("/save/mqtt", POST, [](AsyncWebServerRequest* r) {
-        if (r->hasParam("host",     true)) strlcpy(cfgMqttHost,  r->getParam("host",     true)->value().c_str(), sizeof(cfgMqttHost));
-        if (r->hasParam("port",     true)) cfgMqttPort = r->getParam("port",     true)->value().toInt();
-        if (r->hasParam("user",     true)) strlcpy(cfgMqttUser,  r->getParam("user",     true)->value().c_str(), sizeof(cfgMqttUser));
-        if (r->hasParam("topic",    true)) strlcpy(cfgMqttTopic, r->getParam("topic",    true)->value().c_str(), sizeof(cfgMqttTopic));
-        if (r->hasParam("cooldown", true)) cfgCooldown = r->getParam("cooldown", true)->value().toInt();
+        cfgMqttEnabled = r->hasParam("mqttEnabled", true);  // checkbox absent = unchecked = false
+        if (r->hasParam("host",  true)) strlcpy(cfgMqttHost,  r->getParam("host",  true)->value().c_str(), sizeof(cfgMqttHost));
+        if (r->hasParam("port",  true)) cfgMqttPort = r->getParam("port",  true)->value().toInt();
+        if (r->hasParam("user",  true)) strlcpy(cfgMqttUser,  r->getParam("user",  true)->value().c_str(), sizeof(cfgMqttUser));
+        if (r->hasParam("topic", true)) strlcpy(cfgMqttTopic, r->getParam("topic", true)->value().c_str(), sizeof(cfgMqttTopic));
         auto p = r->getParam("mqttpass", true);
         if (p && p->value().length() > 0)
             strlcpy(cfgMqttPass, p->value().c_str(), sizeof(cfgMqttPass));
@@ -419,6 +433,7 @@ void setupServer() {
     });
 
     server.on("/save/ld2410", POST, [](AsyncWebServerRequest* r) {
+        if (r->hasParam("cooldown", true)) cfgCooldown = r->getParam("cooldown", true)->value().toInt();
         if (r->hasParam("maxmove",  true)) rcMaxMove  = r->getParam("maxmove",  true)->value().toInt();
         if (r->hasParam("maxstill", true)) rcMaxStill = r->getParam("maxstill", true)->value().toInt();
         if (r->hasParam("idle",     true)) rcIdleSec  = r->getParam("idle",     true)->value().toInt();
@@ -447,6 +462,7 @@ void setupServer() {
 bool connectWifi() {
     if (strlen(cfgSsid) == 0) return false;
     WiFi.mode(WIFI_STA);
+    WiFi.setHostname(cfgHostname);
     WiFi.begin(cfgSsid, cfgPass);
     Serial.print("WiFi connecting");
     for (int i = 0; i < 40 && WiFi.status() != WL_CONNECTED; i++) {
@@ -464,16 +480,16 @@ bool connectWifi() {
 void startAP() {
     apMode = true;
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(AP_SSID, AP_PASS);
+    WiFi.softAP(cfgHostname, AP_PASS);
     dns.start(53, "*", WiFi.softAPIP());
-    Serial.println("AP mode " + WiFi.softAPIP().toString() + "  SSID: " AP_SSID "  Pass: " AP_PASS);
+    Serial.println("AP mode " + WiFi.softAPIP().toString() + "  SSID: " + String(cfgHostname) + "  Pass: " AP_PASS);
 }
 
 // ── OTA ───────────────────────────────────────────────────────────────────────
 
 void setupOTA() {
     // ArduinoOTA — PlatformIO network upload (pio run -t upload --upload-port <IP>)
-    ArduinoOTA.setHostname("esp32-ld2410c");
+    ArduinoOTA.setHostname(cfgHostname);
     ArduinoOTA.onStart([]() {
         Serial.println("OTA start");
     });
